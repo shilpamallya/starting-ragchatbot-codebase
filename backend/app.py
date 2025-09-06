@@ -40,10 +40,22 @@ class QueryRequest(BaseModel):
     query: str
     session_id: Optional[str] = None
 
+class SourceInfo(BaseModel):
+    """Information about a source with optional lesson link"""
+    title: str
+    lesson_number: Optional[int] = None  
+    link: Optional[str] = None
+    
+    class Config:
+        """Ensure proper JSON serialization"""
+        json_encoders = {
+            # Ensure all fields are properly serialized
+        }
+
 class QueryResponse(BaseModel):
     """Response model for course queries"""
     answer: str
-    sources: List[str]
+    sources: List[SourceInfo]
     session_id: str
 
 class CourseStats(BaseModel):
@@ -65,9 +77,24 @@ async def query_documents(request: QueryRequest):
         # Process query using RAG system
         answer, sources = rag_system.query(request.query, session_id)
         
+        
+        # Convert sources to SourceInfo objects
+        source_objects = []
+        for source in sources:
+            if isinstance(source, dict):
+                # New structured format
+                source_objects.append(SourceInfo(
+                    title=source.get('title', 'Unknown'),
+                    lesson_number=source.get('lesson_number'),
+                    link=source.get('link')
+                ))
+            else:
+                # Fallback for string format (backward compatibility)  
+                source_objects.append(SourceInfo(title=str(source)))
+        
         return QueryResponse(
             answer=answer,
-            sources=sources,
+            sources=source_objects,
             session_id=session_id
         )
     except Exception as e:
@@ -84,6 +111,28 @@ async def get_course_stats():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/test-sources", response_model=QueryResponse)
+async def test_sources():
+    """Test endpoint to verify SourceInfo serialization"""
+    test_sources = [
+        SourceInfo(
+            title="Test Course",
+            lesson_number=1,
+            link="https://example.com/lesson1"
+        ),
+        SourceInfo(
+            title="Another Course",
+            lesson_number=2,
+            link="https://example.com/lesson2"
+        )
+    ]
+    
+    return QueryResponse(
+        answer="This is a test response",
+        sources=test_sources,
+        session_id="test_session"
+    )
 
 @app.on_event("startup")
 async def startup_event():
