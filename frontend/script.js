@@ -29,6 +29,8 @@ function setupEventListeners() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // New Chat button
+    document.getElementById('newChatBtn').addEventListener('click', createNewSession);
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -122,10 +124,47 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Format sources as clickable links when available
+        const sourceElements = sources.map(source => {
+            if (typeof source === 'object' && source.title) {
+                // Handle structured source objects
+                let displayText = source.title;
+                if (source.lesson_number !== null && source.lesson_number !== undefined) {
+                    displayText += ` - Lesson ${source.lesson_number}`;
+                }
+                
+                if (source.link) {
+                    return `<a href="${escapeHtml(source.link)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(displayText)}</a>`;
+                } else {
+                    return escapeHtml(displayText);
+                }
+            } else if (typeof source === 'string') {
+                // Parse string sources to extract lesson information and create links
+                const sourceStr = source;
+                const lessonMatch = sourceStr.match(/^(.+?) - Lesson (\d+)$/);
+                
+                if (lessonMatch) {
+                    const [, courseTitle, lessonNumber] = lessonMatch;
+                    const lessonLink = getLessonLink(courseTitle, parseInt(lessonNumber));
+                    
+                    if (lessonLink) {
+                        return `<a href="${escapeHtml(lessonLink)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(sourceStr)}</a>`;
+                    } else {
+                        return escapeHtml(sourceStr);
+                    }
+                } else {
+                    return escapeHtml(sourceStr);
+                }
+            } else {
+                // Fallback for other formats
+                return escapeHtml(String(source));
+            }
+        });
+        
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sourceElements.join('')}</div>
             </details>
         `;
     }
@@ -142,6 +181,67 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Function to get lesson link based on course title and lesson number
+function getLessonLink(courseTitle, lessonNumber) {
+    // Mapping of course titles to their base URLs and lesson patterns
+    const coursePatterns = {
+        'Building Towards Computer Use with Anthropic': {
+            baseUrl: 'https://learn.deeplearning.ai/courses/building-toward-computer-use-with-anthropic/lesson',
+            lessons: {
+                0: 'a6k0z/introduction',
+                1: 'x97e6/anthropic-and-claude',
+                2: 'y5k7f/first-api-call',
+                3: 'x5k7f/multimodal-capabilities',
+                4: 'n6k7f/tool-use',
+                5: 'd7k7f/tools-execution-part-2',
+                6: 'm8k7f/function-calling-best-practices',
+                7: 'ljun5/computer-use',
+                8: 'p9k7f/agents'
+            }
+        },
+        'MCP: Build Rich-Context AI Apps with Anthropic': {
+            baseUrl: 'https://learn.deeplearning.ai/courses/mcp-build-rich-context-ai-apps-with-anthropic/lesson',
+            lessons: {
+                0: 'fkbhh/introduction',
+                1: 'ccsd0/why-mcp',
+                2: 'gdms0/mcp-primitives',
+                3: 'sge50/creating-an-mcp-server',
+                4: 'y8g9n/creating-mcp-resources',
+                5: 'pnd5n/creating-an-mcp-client',
+                6: 'frhw0/mcp-tools',
+                7: 'mjei0/mcp-prompts',
+                8: 'l8ms0/configuring-servers-for-claude-desktop',
+                9: 'kd5n0/conclusion'
+            }
+        },
+        'Advanced Retrieval for AI with Chroma': {
+            baseUrl: 'https://learn.deeplearning.ai/courses/advanced-retrieval-for-ai-with-chroma/lesson',
+            lessons: {
+                0: 'a6k0z/introduction',
+                1: 'b7k1z/query-expansion',
+                2: 'c8k2z/cross-encoder-reranking',
+                3: 'd9k3z/embedding-adaptors'
+            }
+        },
+        'Prompt Compression and Query Optimization': {
+            baseUrl: 'https://learn.deeplearning.ai/courses/prompt-compression-and-query-optimization/lesson',
+            lessons: {
+                0: 'a6k0z/introduction',
+                1: 'y8g9n/vanilla-vector-search',
+                2: 'x7k8z/query-expansion',
+                3: 'sge50/projections'
+            }
+        }
+    };
+    
+    const coursePattern = coursePatterns[courseTitle];
+    if (coursePattern && coursePattern.lessons[lessonNumber]) {
+        return `${coursePattern.baseUrl}/${coursePattern.lessons[lessonNumber]}`;
+    }
+    
+    return null; // No link found
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently

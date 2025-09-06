@@ -1,10 +1,13 @@
-from typing import List, Tuple, Optional, Dict
+
+
+
+from typing import List, Tuple, Optional, Dict, Any
 import os
 from document_processor import DocumentProcessor
-from vector_store import VectorStore
+from simple_vector_store import SimpleVectorStore as VectorStore
 from ai_generator import AIGenerator
 from session_manager import SessionManager
-from search_tools import ToolManager, CourseSearchTool
+from search_tools import ToolManager, CourseSearchTool, CourseOutlineTool
 from models import Course, Lesson, CourseChunk
 
 class RAGSystem:
@@ -22,7 +25,9 @@ class RAGSystem:
         # Initialize search tools
         self.tool_manager = ToolManager()
         self.search_tool = CourseSearchTool(self.vector_store)
+        self.outline_tool = CourseOutlineTool(self.vector_store)
         self.tool_manager.register_tool(self.search_tool)
+        self.tool_manager.register_tool(self.outline_tool)
     
     def add_course_document(self, file_path: str) -> Tuple[Course, int]:
         """
@@ -99,7 +104,7 @@ class RAGSystem:
         
         return total_courses, total_chunks
     
-    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str]]:
+    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[Any]]:
         """
         Process a user query using the RAG system with tool-based search.
         
@@ -110,7 +115,35 @@ class RAGSystem:
         Returns:
             Tuple of (response, sources list - empty for tool-based approach)
         """
-        # Create prompt for the AI with clear instructions
+        # Pre-process query to detect outline requests and force correct tool usage
+        outline_keywords = ['outline', 'lessons', 'structure', 'syllabus', 'lesson list', 'all lessons', 'what lessons', "what's in", "what's covered", "course content"]
+        query_lower = query.lower()
+        
+        is_outline_query = any(keyword in query_lower for keyword in outline_keywords)
+        
+        if is_outline_query:
+            # Force outline tool usage for outline queries
+            # Extract course name from query
+            course_name = "MCP"  # Default, could be made smarter
+            if "mcp" in query_lower:
+                course_name = "MCP"
+            elif "chroma" in query_lower:
+                course_name = "Chroma"
+            elif "anthropic" in query_lower:
+                course_name = "Anthropic"
+            elif "prompt" in query_lower:
+                course_name = "Prompt"
+            
+            # Directly use outline tool
+            outline_response = self.tool_manager.execute_tool('get_course_outline', course_name=course_name)
+            
+            # Update conversation history
+            if session_id:
+                self.session_manager.add_exchange(session_id, query, outline_response)
+            
+            return outline_response, []
+        
+        # For non-outline queries, use normal AI processing
         prompt = f"""Answer this question about course materials: {query}"""
         
         # Get conversation history if session exists
