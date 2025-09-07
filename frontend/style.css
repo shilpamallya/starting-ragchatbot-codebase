@@ -34,6 +34,34 @@
     --source-link-shadow-hover: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
+/* Light Theme Variables */
+:root[data-theme="light"] {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --background: #ffffff;
+    --surface: #f8fafc;
+    --surface-hover: #e2e8f0;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --user-message: #2563eb;
+    --assistant-message: #f1f5f9;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --focus-ring: rgba(37, 99, 235, 0.2);
+    --welcome-bg: #eff6ff;
+    --welcome-border: #2563eb;
+    
+    /* Light theme source link variables */
+    --source-link-bg: rgba(37, 99, 235, 0.1);
+    --source-link-bg-hover: rgba(37, 99, 235, 0.15);
+    --source-link-border: rgba(37, 99, 235, 0.2);
+    --source-link-border-hover: rgba(37, 99, 235, 0.4);
+    --source-link-text: #1d4ed8;
+    --source-link-text-hover: #1e40af;
+    --source-link-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --source-link-shadow-hover: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
 /* Base Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -801,8 +829,90 @@ details[open] .suggested-header::before {
     }
 }
 
+/* Theme Toggle Button */
+.theme-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    color: var(--text-primary);
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+    transition-duration: 0.1s;
+}
+
+.theme-icon {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke: currentColor;
+}
+
+/* Initially hide moon icon, show sun icon */
+:root .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+:root .moon-icon {
+    opacity: 0;
+    transform: rotate(180deg) scale(0.3);
+    position: absolute;
+}
+
+/* Light theme - show moon icon, hide sun icon */
+:root[data-theme="light"] .sun-icon {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.3);
+    position: absolute;
+}
+
+:root[data-theme="light"] .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+/* Smooth theme transitions */
+* {
+    transition: 
+        background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @media (max-width: 1024px) {
     .sidebar {
         width: 280px;
+    }
+    
+    .theme-toggle {
+        width: 44px;
+        height: 44px;
+        top: 0.75rem;
+        right: 0.75rem;
     }
 }
