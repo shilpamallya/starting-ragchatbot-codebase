@@ -26,6 +26,23 @@ cp .env.example .env
 # Edit .env to add: ANTHROPIC_API_KEY=your-key-here
 ```
 
+### Code Quality
+```bash
+# Format code automatically
+uv run python scripts/format_code.py
+# OR use shell script: ./scripts/format.sh
+
+# Run quality checks
+uv run python scripts/quality_check.py
+# OR use shell script: ./scripts/check.sh
+
+# Manual formatting commands
+uv run black .          # Format with black
+uv run isort .          # Sort imports
+uv run flake8 .         # Linting
+uv run mypy .           # Type checking
+```
+
 ## Architecture Overview
 
 This is a **Retrieval-Augmented Generation (RAG) system** for querying course materials using semantic search and AI-powered responses.
